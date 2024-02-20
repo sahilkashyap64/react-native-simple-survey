@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import {
     View,
     ViewPropTypes,
+    Button,
 } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -105,6 +106,39 @@ export class SimpleSurvey extends Component {
         }
     }
 
+     // Method to skip the current question
+     skipQuestion = () => {
+        let { currentQuestionIndex } = this.state;
+        const { survey } = this.props;
+
+        // Check if it's not the last question
+        if (currentQuestionIndex < survey.length - 1) {
+            currentQuestionIndex++;
+            this.setState({ currentQuestionIndex });
+        }
+        // Optionally, call onAnswerSubmitted with null or a specific value to indicate a skipped question
+        // this.props.onAnswerSubmitted({ questionId: survey[currentQuestionIndex].questionId, value: 'skipped' });
+    }
+
+    // Render a skip button
+    renderSkipButton() {
+        let { currentQuestionIndex } = this.state;
+        const { survey } = this.props;
+
+        // Do not show skip button for the last question
+        if (currentQuestionIndex === survey.length - 1) return null;
+
+        return (
+            <Button
+                onPress={this.skipQuestion}
+                title="Skip"
+                color="#841584"
+                accessibilityLabel="Skip this question"
+            />
+        );
+    }
+
+
     renderPreviousButton() {
         if (!this.props.renderPrevious) return;
         let { currentQuestionIndex } = this.state;
@@ -154,19 +188,20 @@ export class SimpleSurvey extends Component {
             }, enabled)
         );
     }
-
-    renderNavButtons() {
-        const { navButtonContainerStyle } = this.props;
-        if (this.props.renderPrevious || this.props.renderNext || this.props.renderFinished) {
-            return (
-                <View style={navButtonContainerStyle}>
-                    {this.renderPreviousButton && this.renderPreviousButton()}
-                    {this.renderFinishOrNextButton && this.renderFinishOrNextButton()}
-                </View>
-            );
-        }
-        return;
+   // Modified renderNavButtons method to include renderSkipButton call
+   renderNavButtons() {
+    const { navButtonContainerStyle } = this.props;
+    if (this.props.renderPrevious || this.props.renderNext || this.props.renderFinished) {
+        return (
+            <View style={navButtonContainerStyle}>
+                {this.renderPreviousButton && this.renderPreviousButton()}
+                {this.renderFinishOrNextButton && this.renderFinishOrNextButton()}
+                {this.renderSkipButton()}
+            </View>
+        );
     }
+    return null;
+}
 
     validateSelectionGroupSettings(questionSettings, currentQuestionIndex) {
         if (!questionSettings) return;
