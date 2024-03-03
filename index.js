@@ -412,6 +412,62 @@ export class SimpleSurvey extends Component {
         );
     }
 
+    renderConditionalSelectionWithText() {
+        const { survey, renderSelector, renderTextInput, containerStyle, selectionGroupContainerStyle } = this.props;
+        const { currentQuestionIndex, answers } = this.state;
+        const currentQuestion = survey[currentQuestionIndex];
+    
+        // Ensure a SelectionHandler instance is initialized for the current question
+        if (!this.selectionHandlers[currentQuestionIndex]) {
+            this.selectionHandlers[currentQuestionIndex] = new SelectionHandler({
+                maxMultiSelect: 1,
+                allowDeselect: true
+            });
+        }
+    
+        const isOtherSelected = answers[currentQuestionIndex]?.value === 'Other';
+    
+        return (
+            <View style={containerStyle}>
+                {this.props.renderQuestionText ?
+                    this.props.renderQuestionText(currentQuestion.questionText) : null}
+                <SelectionGroup
+                    onPress={this.selectionHandlers[currentQuestionIndex].selectionHandler}
+                    items={currentQuestion.options.map(option => ({...option, key: option.value}))}
+                    isSelected={this.selectionHandlers[currentQuestionIndex].isSelected}
+                    renderContent={renderSelector}
+                    containerStyle={selectionGroupContainerStyle}
+                    onItemSelected={(item) => {
+                        this.updateAnswer({
+                            questionId: currentQuestion.questionId,
+                            value: item.value,
+                            additionalText: isOtherSelected ? answers[currentQuestionIndex].additionalText : ''
+                        });
+                    }}
+                    onItemDeselected={() => {
+                        this.updateAnswer({
+                            questionId: currentQuestion.questionId,
+                            value: null
+                        });
+                    }}
+                />
+                {isOtherSelected && renderTextInput(
+                    (value) => {
+                        this.updateAnswer({
+                            questionId: currentQuestion.questionId,
+                            value: 'Other',
+                            additionalText: value
+                        });
+                    },
+                    answers[currentQuestionIndex]?.additionalText,
+                    "Please specify" // Placeholder text for the "Other" input field
+                )}
+                {this.renderNavButtons()}
+            </View>
+        );
+    }
+    
+
     render() {
         const { survey } = this.props;
         const currentQuestion = this.state.currentQuestionIndex;
@@ -421,6 +477,7 @@ export class SimpleSurvey extends Component {
             case 'TextInput': return this.renderTextInputElement();
             case 'NumericInput': return this.renderNumeric();
             case 'Info': return this.renderInfo();
+            case 'ConditionalSelectionWithText': return this.renderConditionalSelectionWithText();
             default: return <View />;
         }
     }
